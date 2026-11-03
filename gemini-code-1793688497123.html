@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ความพึงพอใจ - กลุ่มงานเทคนิคการแพทย์ รพ.หนองใหญ่</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Sarabun) -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="loginSection" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-teal-700 to-blue-900 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-teal-100">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-teal-100 text-teal-700 rounded-full mb-4 shadow-inner">
+                    <i class="fa-solid fa-hospital-user text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-900">กลุ่มงานเทคนิคการแพทย์</h1>
+                <p class="text-sm text-slate-500 mt-1">โรงพยาบาลหนองใหญ่ จ.ชลบุรี</p>
+                <div class="mt-3 inline-block bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-semibold">
+                    ระบบประเมินความพึงพอใจผู้รับบริการ
+                </div>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="username" required value="medtech_admin"
+                            class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (Password)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" required value="123456"
+                            class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm">
+                    </div>
+                </div>
+
+                <div id="loginError" class="hidden text-red-500 text-xs text-center font-medium"></div>
+
+                <button type="submit"
+                    class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ Dashboard
+                </button>
+            </form>
+
+            <div class="mt-6 text-center border-t border-slate-100 pt-4">
+                <p class="text-xs text-slate-400">ข้อมูลทดสอบ: Username: <span class="font-semibold text-slate-600">medtech_admin</span> | Password: <span class="font-semibold text-slate-600">123456</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= DASHBOARD MAIN WRAPPER ================= -->
+    <div id="dashboardSection" class="hidden flex-1 flex flex-col">
+        <!-- Navbar -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-teal-600 text-white p-2 rounded-lg shadow">
+                        <i class="fa-solid fa-chart-line text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 leading-tight">Dashboard ความพึงพอใจผู้รับบริการ</h1>
+                        <p class="text-xs text-slate-500">กลุ่มงานเทคนิคการแพทย์ โรงพยาบาลหนองใหญ่</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right hidden sm:block">
+                        <span class="block text-xs font-semibold text-slate-700" id="userNameDisplay">ผู้ดูแลระบบ (Admin)</span>
+                        <span class="block text-[10px] text-teal-600">สถานะ: ออนไลน์</span>
+                    </div>
+                    <button onclick="handleLogout()" class="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 flex items-center gap-2 border border-slate-200">
+                        <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+            <!-- FILTER PANEL -->
+            <section class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 text-teal-700 font-semibold text-sm">
+                        <i class="fa-solid fa-filter"></i>
+                        <span>ตัวกรองข้อมูล (Filters)</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 flex-1 max-w-4xl">
+                        <!-- Filter ปี -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">ปีที่ประเมิน (Year)</label>
+                            <select id="filterYear" onchange="applyFilters()" class="w-full text-sm border border-slate-300 rounded-lg p-2 bg-slate-50 focus:ring-2 focus:ring-teal-500">
+                                <option value="">ทุกปี (All Years)</option>
+                            </select>
+                        </div>
+                        <!-- Filter เดือน -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">เดือน (Month)</label>
+                            <select id="filterMonth" onchange="applyFilters()" class="w-full text-sm border border-slate-300 rounded-lg p-2 bg-slate-50 focus:ring-2 focus:ring-teal-500">
+                                <option value="">ทุกเดือน (All Months)</option>
+                                <option value="01">มกราคม</option>
+                                <option value="02">กุมภาพันธ์</option>
+                                <option value="03">มีนาคม</option>
+                                <option value="04">เมษายน</option>
+                                <option value="05">พฤษภาคม</option>
+                                <option value="06">มิถุนายน</option>
+                                <option value="07">กรกฎาคม</option>
+                                <option value="08">สิงหาคม</option>
+                                <option value="09">กันยายน</option>
+                                <option value="10">ตุลาคม</option>
+                                <option value="11">พฤศจิกายน</option>
+                                <option value="12">ธันวาคม</option>
+                            </select>
+                        </div>
+                        <!-- Filter หน่วยงาน -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">หน่วยงาน / จุดบริการ</label>
+                            <select id="filterUnit" onchange="applyFilters()" class="w-full text-sm border border-slate-300 rounded-lg p-2 bg-slate-50 focus:ring-2 focus:ring-teal-500">
+                                <option value="">ทุกหน่วยงาน</option>
+                                <option value="งานเจาะเลือดและเก็บสิ่งส่งตรวจ">งานเจาะเลือดและเก็บสิ่งส่งตรวจ</option>
+                                <option value="งานห้องปฏิบัติการเคมีคลินิก/ภูมิคุ้มกัน">งานห้องปฏิบัติการเคมีคลินิก/ภูมิคุ้มกัน</option>
+                                <option value="งานโลหิตวิทยาและจุลทรรศนศาสตร์">งานโลหิตวิทยาและจุลทรรศนศาสตร์</option>
+                            </select>
+                        </div>
+                        <!-- Filter เพศ -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">เพศ</label>
+                            <select id="filterGender" onchange="applyFilters()" class="w-full text-sm border border-slate-300 rounded-lg p-2 bg-slate-50 focus:ring-2 focus:ring-teal-500">
+                                <option value="">ทุกเพศ</option>
+                                <option value="ชาย">ชาย</option>
+                                <option value="หญิง">หญิง</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <button onclick="resetFilters()" class="w-full lg:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold px-4 py-2.5 rounded-lg transition border border-slate-300">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> รีเซ็ตตัวกรอง
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KPI SUMMARY CARDS -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">จำนวนผู้ตอบแบบประเมิน</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpiTotal">0</h3>
+                        <p class="text-[11px] text-teal-600 mt-1"><i class="fa-solid fa-users"></i> อ้างอิงจากข้อมูลทั้งหมด</p>
+                    </div>
+                    <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-clipboard-user"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">คะแนนเฉลี่ยรวม (เต็ม 5)</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpiAvgScore">0.00</h3>
+                        <p class="text-[11px] text-emerald-600 mt-1"><i class="fa-solid fa-star"></i> ระดับดีมาก</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-star-half-stroke"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">ความพึงพอใจระดับ 4-5 ดาว</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpiHighSat">0%</h3>
+                        <p class="text-[11px] text-blue-600 mt-1"><i class="fa-solid fa-circle-check"></i> เกณฑ์มาตรฐานเป้าหมาย</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-face-smile"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">ข้อเสนอแนะเพิ่มเติม</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpiFeedbackCount">0</h3>
+                        <p class="text-[11px] text-purple-600 mt-1"><i class="fa-solid fa-comment-dots"></i> ความคิดเห็นจากผู้รับบริการ</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHARTS SECTION -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- กราฟแท่งคะแนนรายข้อ (กินพื้นที่ 2 คอลัมน์) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-900 text-base">คะแนนเฉลี่ยแยกตามหัวข้อการประเมิน (8 หัวข้อ)</h3>
+                        <span class="text-xs bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md font-medium">คะแนนเต็ม 5.0</span>
+                    </div>
+                    <div class="relative flex-1 min-h-[300px]">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- กราฟสัดส่วนเพศ (กินพื้นที่ 1 คอลัมน์) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-900 text-base">สัดส่วนเพศผู้รับบริการ</h3>
+                    </div>
+                    <div class="relative flex-1 min-h-[300px] flex items-center justify-center">
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DATA TABLE & FEEDBACK -->
+            <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <h3 class="font-bold text-slate-900 text-base">รายการข้อมูลผลการประเมิน</h3>
+                    <div class="w-full sm:w-72">
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="ค้นหาข้อมูลในตาราง..."
+                            class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 uppercase text-[11px] font-semibold tracking-wider">
+                                <th class="p-3.5">วันที่ประเมิน</th>
+                                <th class="p-3.5">เพศ</th>
+                                <th class="p-3.5">หน่วยงาน</th>
+                                <th class="p-3.5 text-center">คะแนนเฉลี่ย</th>
+                                <th class="p-3.5">ข้อเสนอแนะเพิ่มเติม</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="divide-y divide-slate-200 text-slate-600">
+                            <!-- Rows injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noDataMessage" class="hidden text-center py-8 text-slate-400 text-sm">
+                    ไม่พบข้อมูลที่ตรงกับเงื่อนไขการค้นหา
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-slate-200 py-4 mt-auto text-center text-xs text-slate-500">
+            <p>กลุ่มงานเทคนิคการแพทย์ โรงพยาบาลหนองใหญ่ จังหวัดชลบุรี &copy; 2026 - Interactive Dashboard System</p>
+        </footer>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // ชุดข้อมูลจริงจาก CSV (พร้อมเพิ่มการจำแนกหน่วยงานเพื่อทดสอบการ Filter หน่วยงาน)
+        const rawData = [
+            {"ประทับเวลา":"2025-11-27 13:57:56.205","วันที่ทำการประเมิน":"2025-11-27","เพศ":"หญิง","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":4,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":5,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":5,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":5,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-27 13:58:22.516","วันที่ทำการประเมิน":"2025-11-27","เพศ":"ชาย","หน่วยงาน":"งานห้องปฏิบัติการเคมีคลินิก/ภูมิคุ้มกัน","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":4,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":4,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-27 14:05:38.664","วันที่ทำการประเมิน":"2025-11-27","เพศ":"ชาย","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":4,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":4,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":"ห้องดูคับแคบไปหน่อยครับ"},
+            {"ประทับเวลา":"2025-11-27 14:06:07.865","วันที่ทำการประเมิน":"2025-11-27","เพศ":"หญิง","หน่วยงาน":"งานโลหิตวิทยาและจุลทรรศนศาสตร์","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":5,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":4,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":4,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":5,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":5,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-27 14:07:42.619","วันที่ทำการประเมิน":"2025-11-27","เพศ":"หญิง","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":5,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":5,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":5,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":5,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-27 17:10:59.989","วันที่ทำการประเมิน":"2025-11-27","เพศ":"ชาย","หน่วยงาน":"งานห้องปฏิบัติการเคมีคลินิก/ภูมิคุ้มกัน","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":5,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":3,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":5,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-27 17:11:37.174","วันที่ทำการประเมิน":"2025-11-27","เพศ":"หญิง","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":5,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":5,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":5,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":5,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-27 18:19:42.906","วันที่ทำการประเมิน":"2025-11-27","เพศ":"หญิง","หน่วยงาน":"งานโลหิตวิทยาและจุลทรรศนศาสตร์","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":5,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":5,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":5,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":5,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2025-11-28 14:53:09.309","วันที่ทำการประเมิน":"2025-11-28","เพศ":"หญิง","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":5,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":5,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":4,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":"ห้องทำงานดูอึดอัด"},
+            {"ประทับเวลา":"2025-11-28 14:53:14.076","วันที่ทำการประเมิน":"2025-11-28","เพศ":"หญิง","หน่วยงาน":"งานห้องปฏิบัติการเคมีคลินิก/ภูมิคุ้มกัน","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":4,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":4,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":4,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":4,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":"วันนี้รอผลเลือดค่อนค้างนานเพราะคนไข้คลินิกเบาหวานเยอะ"},
+            {"ประทับเวลา":"2025-12-11 12:30:28.252","วันที่ทำการประเมิน":"2025-12-11","เพศ":"ชาย","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":4,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":4,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":4,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":4,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2026-03-17 15:19:50.433","วันที่ทำการประเมิน":"2026-03-17","เพศ":"ชาย","หน่วยงาน":"งานโลหิตวิทยาและจุลทรรศนศาสตร์","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":5,"2. การแต่งกายสะอาด เรียบร้อย":5,"3. การได้รับบริการตามลำดับก่อน หลัง":5,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":4,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":5,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":4,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":4,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":null},
+            {"ประทับเวลา":"2026-10-28 11:08:51.09","วันที่ทำการประเมิน":"2026-10-28","เพศ":"ชาย","หน่วยงาน":"งานเจาะเลือดและเก็บสิ่งส่งตรวจ","1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ":4,"2. การแต่งกายสะอาด เรียบร้อย":4,"3. การได้รับบริการตามลำดับก่อน หลัง":4,"4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ":3,"5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ":4,"6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด":4,"7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย":3,"8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ":4,"ข้อเสนอแนะเพิ่มเติม":"ห้องทำงานเล็ก"}
+        ];
+
+        const questionKeys = [
+            "1. เจ้าหน้าที่ยิ้มแย้ม ให้บริการด้วยวาจาที่สุภาพ",
+            "2. การแต่งกายสะอาด เรียบร้อย",
+            "3. การได้รับบริการตามลำดับก่อน หลัง",
+            "4. ระยะเวลารอคอยตั้งแต่นำเอกสารมายื่น เพื่อรอเจาะเลือดหรือเก็บสิ่งส่งตรวจ ",
+            "5. การเจาะเลือด การแนะนำการเก็บสิ่งส่งตรวจ",
+            "6. การอธิบายการปฏิบัติตัวหลังเจาะเลือด",
+            "7. สถานที่ในการรับบริการเป็น สัดส่วน สะดวกต่อการเข้ารับบริการ และรอฟังผลสะดวกสบาย",
+            "8. ระยะเวลาในการรับผลการตรวจทางห้องปฏิบัติการ"
+        ];
+
+        const shortLabels = [
+            "1. วาจาสุภาพ ยิ้มแย้ม",
+            "2. การแต่งกายสะอาด",
+            "3. บริการตามลำดับ",
+            "4. ระยะเวลารอคอย",
+            "5. การเจาะเลือด/แนะนำ",
+            "6. อธิบายการปฏิบัติตัว",
+            "7. สถานที่เหมาะสม",
+            "8. ระยะเวลารับผลตรวจ"
+        ];
+
+        let barChartInstance = null;
+        let doughnutChartInstance = null;
+
+        // Login Handler
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if(user === 'medtech_admin' && pass === '123456') {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                initDashboard();
+            } else {
+                const err = document.getElementById('loginError');
+                err.textContent = 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง (แนะนำ: medtech_admin / 123456)';
+                err.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        // Initialize Dashboard
+        function initDashboard() {
+            populateYearFilter();
+            applyFilters();
+        }
+
+        function populateYearFilter() {
+            const years = [...new Set(rawData.map(d => d['วันที่ทำการประเมิน'].substring(0, 4)))].sort();
+            const yearSelect = document.getElementById('filterYear');
+            yearSelect.innerHTML = '<option value="">ทุกปี (All Years)</option>';
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = `พ.ศ. ${parseInt(y) + 543} (${y})`;
+                yearSelect.appendChild(opt);
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('filterYear').value = '';
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterUnit').value = '';
+            document.getElementById('filterGender').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        // Apply Filters and Update UI
+        function applyFilters() {
+            const selectedYear = document.getElementById('filterYear').value;
+            const selectedMonth = document.getElementById('filterMonth').value;
+            const selectedUnit = document.getElementById('filterUnit').value;
+            const selectedGender = document.getElementById('filterGender').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+            const filteredData = rawData.filter(item => {
+                const dateStr = item['วันที่ทำการประเมิน'];
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(5, 7);
+
+                if (selectedYear && year !== selectedYear) return false;
+                if (selectedMonth && month !== selectedMonth) return false;
+                if (selectedUnit && item['หน่วยงาน'] !== selectedUnit) return false;
+                if (selectedGender && item['เพศ'] !== selectedGender) return false;
+
+                if (searchText) {
+                    const matchText = (dateStr + ' ' + item['เพศ'] + ' ' + (item['ข้อเสนอแนะเพิ่มเติม'] || '') + ' ' + item['หน่วยงาน']).toLowerCase();
+                    if (!matchText.includes(searchText)) return false;
+                }
+                return true;
+            });
+
+            updateKPIs(filteredData);
+            updateCharts(filteredData);
+            updateTable(filteredData);
+        }
+
+        // Update KPIs
+        function updateKPIs(data) {
+            const total = data.length;
+            document.getElementById('kpiTotal').textContent = total;
+
+            if (total === 0) {
+                document.getElementById('kpiAvgScore').textContent = '0.00';
+                document.getElementById('kpiHighSat').textContent = '0%';
+                document.getElementById('kpiFeedbackCount').textContent = '0';
+                return;
+            }
+
+            let totalScoreSum = 0;
+            let highSatCount = 0;
+            let totalScoresCount = 0;
+            let feedbackCount = 0;
+
+            data.forEach(item => {
+                if (item['ข้อเสนอแนะเพิ่มเติม']) feedbackCount++;
+                questionKeys.forEach(q => {
+                    const score = item[q];
+                    if (score) {
+                        totalScoreSum += score;
+                        totalScoresCount++;
+                        if (score >= 4) highSatCount++;
+                    }
+                });
+            });
+
+            const avgScore = totalScoresCount > 0 ? (totalScoreSum / totalScoresCount).toFixed(2) : '0.00';
+            const highSatPct = totalScoresCount > 0 ? ((highSatCount / totalScoresCount) * 100).toFixed(1) + '%' : '0%';
+
+            document.getElementById('kpiAvgScore').textContent = avgScore;
+            document.getElementById('kpiHighSat').textContent = highSatPct;
+            document.getElementById('kpiFeedbackCount').textContent = feedbackCount;
+        }
+
+        // Update Charts
+        function updateCharts(data) {
+            // Calculate average per question
+            const avgScores = questionKeys.map(q => {
+                let sum = 0, count = 0;
+                data.forEach(item => {
+                    if (item[q]) { sum += item[q]; count++; }
+                });
+                return count > 0 ? (sum / count).toFixed(2) : 0;
+            });
+
+            // Gender count
+            let maleCount = 0, femaleCount = 0;
+            data.forEach(item => {
+                if (item['เพศ'] === 'ชาย') maleCount++;
+                if (item['เพศ'] === 'หญิง') femaleCount++;
+            });
+
+            // Bar Chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            if (barChartInstance) barChartInstance.destroy();
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: shortLabels,
+                    datasets: [{
+                        label: 'คะแนนเฉลี่ย',
+                        data: avgScores,
+                        backgroundColor: 'rgba(13, 148, 136, 0.8)',
+                        borderColor: 'rgba(15, 118, 110, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 5, ticks: { stepSize: 1 } },
+                        x: { ticks: { font: { size: 11 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Doughnut Chart
+            const doughCtx = document.getElementById('doughnutChart').getContext('2d');
+            if (doughnutChartInstance) doughnutChartInstance.destroy();
+            doughnutChartInstance = new Chart(doughCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ชาย', 'หญิง'],
+                    datasets: [{
+                        data: [maleCount, femaleCount],
+                        backgroundColor: ['#3b82f6', '#ec4899'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        // Update Table
+        function updateTable(data) {
+            const tbody = document.getElementById('dataTableBody');
+            const noDataMsg = document.getElementById('noDataMessage');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                noDataMsg.classList.remove('hidden');
+                return;
+            } else {
+                noDataMsg.classList.add('hidden');
+            }
+
+            data.forEach(item => {
+                let sum = 0, count = 0;
+                questionKeys.forEach(q => {
+                    if (item[q]) { sum += item[q]; count++; }
+                });
+                const avg = count > 0 ? (sum / count).toFixed(2) : '-';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3.5 font-medium text-slate-700">${item['วันที่ทำการประเมิน']}</td>
+                    <td class="p-3.5"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${item['เพศ'] === 'ชาย' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}">${item['เพศ']}</span></td>
+                    <td class="p-3.5 text-xs text-slate-500">${item['หน่วยงาน'] || 'กลุ่มงานเทคนิคการแพทย์'}</td>
+                    <td class="p-3.5 text-center font-bold text-teal-700">${avg}</td>
+                    <td class="p-3.5 text-xs text-slate-500 italic">${item['ข้อเสนอแนะเพิ่มเติม'] || '<span class="text-slate-300">- ไม่มีข้อเสนอแนะ -</span>'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
